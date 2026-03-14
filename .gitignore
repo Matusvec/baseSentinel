@@ -4,6 +4,7 @@ dist/
 build/
 .env
 .env.local
+.mcp.json
 .claude/
 *.pyc
 __pycache__/
