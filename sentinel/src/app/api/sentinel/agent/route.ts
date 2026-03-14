@@ -119,9 +119,10 @@ function calculateTrackingGimbal(
   params: Record<string, unknown>
 ) {
   const vision = perception.vision as Record<string, unknown> | undefined;
-  const people = vision?.people as Array<{ bbox: { x: number; y: number; width: number; height: number } }> | undefined;
-  const targetId = (params.target_id as number) || 0;
-  const person = people?.[targetId];
+  const people = vision?.people as Array<{ id: number; bbox: { x: number; y: number; width: number; height: number } }> | undefined;
+  const targetId = (params.target_id as number) || 1;
+  // Find by person ID first, fall back to array index 0 (closest person)
+  const person = people?.find(p => p.id === targetId) ?? people?.[0];
 
   if (!person?.bbox) {
     return { pan: 90, tilt: 90 };

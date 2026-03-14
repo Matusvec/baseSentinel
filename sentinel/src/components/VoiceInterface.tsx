@@ -53,14 +53,11 @@ function makeEntry(role: 'user' | 'sentinel', text: string): TranscriptEntry {
  * Sends a query to the SENTINEL speak API, plays the returned audio, and
  * returns the response text.
  */
-async function querySpeak(query: string): Promise<string> {
+async function querySpeak(userQuery: string): Promise<string> {
   const res = await fetch('/api/sentinel/speak', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: `User asked: ${query}. Generate a response based on recent SENTINEL observations.`,
-      context: 'summary',
-    }),
+    body: JSON.stringify({ query: userQuery }),
   });
 
   if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -72,7 +69,7 @@ async function querySpeak(query: string): Promise<string> {
     audio.play();
   }
 
-  return data.response_text ?? data.text ?? 'No response received.';
+  return data.text ?? 'No response received.';
 }
 
 /**

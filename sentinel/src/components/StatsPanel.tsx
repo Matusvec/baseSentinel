@@ -102,9 +102,9 @@ export default function StatsPanel() {
       if (s) {
         setStats({
           total_detections: s.total_detections ?? 0,
-          avg_people_per_frame: parseFloat((s.avg_people_per_frame ?? 0).toFixed(1)),
-          peak_people: s.peak_people ?? 0,
-          total_alerts: s.total_alerts ?? 0,
+          avg_people_per_frame: parseFloat((s.avg_people ?? s.avg_people_per_frame ?? 0).toFixed(1)),
+          peak_people: s.max_people ?? s.peak_people ?? 0,
+          total_alerts: s.alerts ?? s.total_alerts ?? 0,
         });
         setLastUpdated(new Date().toLocaleTimeString('en-US', { hour12: false }));
         setError(null);
