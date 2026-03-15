@@ -2,15 +2,15 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-/** Pan range in degrees */
+/** Pan range: 0 (right) to 180 (left) */
 const PAN_MIN = 0;
 const PAN_MAX = 180;
-/** Tilt range in degrees */
-const TILT_MIN = 45;
-const TILT_MAX = 135;
+/** Tilt range: 20 (up) to 130 (down) */
+const TILT_MIN = 20;
+const TILT_MAX = 130;
 /** Default center position */
 const DEFAULT_PAN = 90;
-const DEFAULT_TILT = 90;
+const DEFAULT_TILT = 70;
 
 interface GimbalPosition {
   pan: number;
@@ -197,7 +197,7 @@ export default function GimbalControl() {
           onClick={handleReset}
           className="rounded border border-zinc-600 bg-zinc-800 px-4 py-1.5 text-xs font-semibold tracking-widest text-zinc-300 uppercase transition-colors hover:border-zinc-500 hover:bg-zinc-700 active:bg-zinc-600"
         >
-          Center (90 / 90)
+          Center (90 / 70)
         </button>
       </div>
     </div>

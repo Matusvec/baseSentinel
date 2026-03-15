@@ -22,33 +22,9 @@ export interface PatternAnalysis {
   narration_context: 'detection' | 'alert' | 'summary';
 }
 
-/**
- * Analyze behavioral patterns using Featherless.AI (Llama 3.1 70B).
- * This provides the "reasoning layer" — deep analysis of detection patterns over time.
- */
-export async function analyzePatterns(
-  perception: Record<string, unknown>,
-  trigger: string
-): Promise<PatternAnalysis | null> {
-  const apiKey = process.env.FEATHERLESS_API_KEY;
-  if (!apiKey) {
-    console.error('FEATHERLESS_API_KEY not set');
-    return null;
-  }
+import { getFeatherlessPrompt } from '@/lib/mission';
 
-  try {
-    const response = await fetch('https://api.featherless.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
-        messages: [
-          {
-            role: 'system',
-            content: `You are SENTINEL's behavioral analysis engine. Analyze detection patterns and identify anomalies, trends, and insights.
+const DEFAULT_SYSTEM_PROMPT = `You are SENTINEL's behavioral analysis engine. Analyze detection patterns and identify anomalies, trends, and insights.
 
 ANALYSIS FRAMEWORK:
 1. Traffic patterns: Are people moving through normally or is there congestion?
@@ -64,11 +40,41 @@ Respond ONLY in JSON:
   "recommendations": [{ "action": "track|investigate|alert|ignore", "target": "string", "reasoning": "string" }],
   "spoken_summary": "30-50 word natural language summary for voice narration",
   "narration_context": "detection|alert|summary"
-}`,
-          },
+}`;
+
+/**
+ * Analyze behavioral patterns using Featherless.AI (Llama 3.1 70B).
+ * Uses the active mission's Featherless prompt if one is set,
+ * otherwise falls back to the default analysis framework.
+ */
+export async function analyzePatterns(
+  perception: Record<string, unknown>,
+  trigger: string,
+  temporalContext?: string
+): Promise<PatternAnalysis | null> {
+  const apiKey = process.env.FEATHERLESS_API_KEY;
+  if (!apiKey) {
+    console.error('FEATHERLESS_API_KEY not set');
+    return null;
+  }
+
+  // Use mission-specific Featherless prompt if available
+  const systemPrompt = getFeatherlessPrompt() || DEFAULT_SYSTEM_PROMPT;
+
+  try {
+    const response = await fetch('https://api.featherless.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
+        messages: [
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Trigger: ${trigger}\nPerception: ${JSON.stringify(perception.vision)}\nSensors: ${JSON.stringify(perception.sensors)}`,
+            content: `Trigger: ${trigger}\nPerception: ${JSON.stringify(perception.vision)}\nLocal CV: ${JSON.stringify(perception.local_cv)}\nSensors: ${JSON.stringify(perception.sensors)}${temporalContext ? `\n\nTEMPORAL CONTEXT:\n${temporalContext}` : ''}`,
           },
         ],
         temperature: 0.3,
@@ -77,8 +83,13 @@ Respond ONLY in JSON:
     });
 
     const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error('Featherless: empty response', response.status, data.error ?? '');
+      return null;
+    }
     return JSON.parse(
-      data.choices[0].message.content.replace(/```json|```/g, '').trim()
+      content.replace(/```json|```/g, '').trim()
     );
   } catch (error) {
     console.error('Featherless analysis error:', error);

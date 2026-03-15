@@ -81,7 +81,7 @@ function StatCard({ label, value, danger = false, unit }: StatCardProps) {
 
 /**
  * Polls the SENTINEL history API every 10 seconds and renders a 2x2 stat grid.
- * Displays total detections, average people per frame, peak people, and total alerts.
+ * Shows frames with people detected, average concurrent, peak concurrent, and alerts.
  */
 export default function StatsPanel() {
   const [stats, setStats] = useState<Stats>({
@@ -125,7 +125,7 @@ export default function StatsPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-mono font-bold tracking-widest text-zinc-400 uppercase">
-          Threat Statistics
+          Session Stats
         </h2>
         <span className="text-xs font-mono text-zinc-600">
           {error ? (
@@ -138,13 +138,10 @@ export default function StatsPanel() {
 
       {/* 2x2 grid */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Total Detections" value={stats.total_detections} />
-        <StatCard
-          label="Avg People / Frame"
-          value={stats.avg_people_per_frame}
-        />
-        <StatCard label="Peak People" value={stats.peak_people} />
-        <StatCard label="Total Alerts" value={stats.total_alerts} danger />
+        <StatCard label="Frames w/ People" value={stats.total_detections} />
+        <StatCard label="Avg Concurrent" value={stats.avg_people_per_frame} />
+        <StatCard label="Peak Concurrent" value={stats.peak_people} />
+        <StatCard label="Alerts Triggered" value={stats.total_alerts} danger />
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ export type AlertLevel = 'normal' | 'elevated' | 'alert';
 
 interface AlertBarProps {
   alertLevel: AlertLevel;
+  clock?: string;
 }
 
 const LEVEL_CONFIG: Record<
@@ -36,7 +37,7 @@ const LEVEL_CONFIG: Record<
  * Full-width status bar showing the current SENTINEL alert level.
  * Flashes on alert level to draw immediate attention.
  */
-export default function AlertBar({ alertLevel }: AlertBarProps) {
+export default function AlertBar({ alertLevel, clock }: AlertBarProps) {
   const config = LEVEL_CONFIG[alertLevel];
   const [visible, setVisible] = useState(true);
 
@@ -80,9 +81,11 @@ export default function AlertBar({ alertLevel }: AlertBarProps) {
         SENTINEL //&nbsp;{config.label}
       </span>
       {/* Timestamp */}
-      <span className="ml-auto text-xs text-zinc-500 tracking-widest hidden sm:block">
-        {new Date().toLocaleTimeString('en-US', { hour12: false })}
-      </span>
+      {clock && (
+        <span className="ml-auto text-xs text-zinc-500 tracking-widest hidden sm:block">
+          {clock}
+        </span>
+      )}
     </div>
   );
 }

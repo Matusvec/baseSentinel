@@ -1,7 +1,11 @@
 import { MongoClient, Db } from 'mongodb';
 
 const uri = process.env.MONGODB_URI || '';
-const options = {};
+const options = {
+  maxPoolSize: 10,
+  minPoolSize: 2,
+  maxIdleTimeMS: 30_000,
+};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
@@ -33,7 +37,12 @@ let _promise: Promise<MongoClient> | null = null;
 
 function ensureClient(): Promise<MongoClient> {
   if (!_promise) {
-    _promise = getClientPromise();
+    _promise = getClientPromise().catch((err) => {
+      // Clear cached promise so next call retries instead of returning
+      // the same rejected promise forever
+      _promise = null;
+      throw err;
+    });
   }
   return _promise;
 }
@@ -43,7 +52,25 @@ export default ensureClient;
 /**
  * Get the sentinel database instance.
  */
+let _db: Db | null = null;
+let _indexesCreated = false;
+
 export async function getDb(): Promise<Db> {
+  if (_db) return _db;
   const client = await ensureClient();
-  return client.db('sentinel');
+  _db = client.db('sentinel');
+
+  // Ensure indexes exist (once per process lifetime)
+  if (!_indexesCreated) {
+    _indexesCreated = true;
+    _db.collection('detections').createIndex({ timestamp: -1 }).catch(() => {});
+    _db.collection('events').createIndex({ timestamp: -1 }).catch(() => {});
+    _db.collection('agent_decisions').createIndex({ timestamp: -1 }).catch(() => {});
+    _db.collection('analysis_results').createIndex({ timestamp: -1 }).catch(() => {});
+    _db.collection('missions').createIndex({ status: 1, createdAt: -1 }).catch(() => {});
+    _db.collection('chat_messages').createIndex({ timestamp: -1 }).catch(() => {});
+    _db.collection('known_faces').createIndex({ name: 1 }, { unique: true }).catch(() => {});
+  }
+
+  return _db;
 }

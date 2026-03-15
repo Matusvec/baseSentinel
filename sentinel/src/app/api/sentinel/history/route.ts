@@ -6,9 +6,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const timerange = searchParams.get('timerange') || '15m';
     const type = searchParams.get('type') || 'all';
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const parsedLimit = parseInt(searchParams.get('limit') || '50');
+    const limit = Math.min(Number.isNaN(parsedLimit) ? 50 : parsedLimit, 500);
 
-    const minutes = parseInt(timerange) || 15;
+    const TIMERANGE_MAP: Record<string, number> = { '5m': 5, '15m': 15, '30m': 30, '1h': 60 };
+    const minutes = TIMERANGE_MAP[timerange] ?? (parseInt(timerange) || 15);
     const since = new Date(Date.now() - minutes * 60 * 1000);
 
     const db = await getDb();
@@ -46,9 +48,25 @@ export async function GET(request: Request) {
       {
         $group: {
           _id: null,
-          total_detections: { $sum: 1 },
-          avg_people: { $avg: { $size: { $ifNull: ['$vision.people', []] } } },
-          max_people: { $max: { $size: { $ifNull: ['$vision.people', []] } } },
+          total_frames: { $sum: 1 },
+          // Count frames where at least 1 person was detected
+          total_detections: {
+            $sum: {
+              $cond: [
+                { $gt: [{ $ifNull: ['$local_cv.person_count', 0] }, 0] },
+                1,
+                0,
+              ],
+            },
+          },
+          // Average people per frame (using local CV, not Gemini)
+          avg_people: {
+            $avg: { $ifNull: ['$local_cv.person_count', 0] },
+          },
+          // Peak concurrent people
+          max_people: {
+            $max: { $ifNull: ['$local_cv.person_count', 0] },
+          },
           alerts: {
             $sum: {
               $cond: [

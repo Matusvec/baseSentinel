@@ -9,3 +9,7 @@ build/
 *.pyc
 __pycache__/
 venv/
+*.t7
+*.onnx
+*.task
+sentinel_test.mp3

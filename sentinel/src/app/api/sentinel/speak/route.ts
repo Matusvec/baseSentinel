@@ -99,7 +99,12 @@ Respond with ONLY the spoken answer (no JSON, no markdown).`,
     );
 
     const data = await response.json();
-    return data.candidates[0].content.parts[0].text.trim();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      console.error('[speak] Gemini returned empty/blocked response:', data.candidates?.[0]?.finishReason);
+      throw new Error('Empty Gemini response');
+    }
+    return text.trim();
   } catch {
     return `In the last 15 minutes, I recorded ${recentDetections.length} observations with an average of ${avgPeople} people per frame and ${alerts} alerts.`;
   }

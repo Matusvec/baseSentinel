@@ -39,6 +39,7 @@ export async function generateSpeech(
           model_id: 'eleven_turbo_v2',
           voice_settings: settings,
         }),
+        signal: AbortSignal.timeout(8000),
       }
     );
 

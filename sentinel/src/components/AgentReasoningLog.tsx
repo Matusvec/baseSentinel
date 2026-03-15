@@ -88,7 +88,7 @@ function DecisionCard({ entry }: DecisionCardProps) {
           <p className="text-xs text-zinc-300 leading-relaxed">{entry.reasoning}</p>
 
           {/* Tool chain */}
-          {entry.toolChain.length > 0 && (
+          {entry.toolChain?.length > 0 && (
             <div className="flex flex-wrap items-center gap-1">
               <span className="text-[10px] uppercase tracking-widest text-zinc-500 mr-1">
                 Tools:
@@ -175,8 +175,8 @@ export default function AgentReasoningLog() {
             — awaiting decisions —
           </p>
         )}
-        {decisions.map((entry) => (
-          <DecisionCard key={entry.id} entry={entry} />
+        {decisions.map((entry, idx) => (
+          <DecisionCard key={entry.id || `decision-${idx}`} entry={entry} />
         ))}
       </div>
     </div>

@@ -90,7 +90,11 @@ function IrIndicator({ index, broken }: IrIndicatorProps) {
  * Displays ultrasonic distance gauges, IR beam status, sound level, and gimbal angles.
  */
 export default function SensorPanel({ sensors }: SensorPanelProps) {
-  const { d, ir, s, p, t } = sensors;
+  const d = sensors?.d ?? { f: 0, l: 0, r: 0 };
+  const ir = sensors?.ir ?? [0, 0] as [number, number];
+  const s = sensors?.s ?? 0;
+  const p = sensors?.p ?? 90;
+  const t = sensors?.t ?? 90;
   const soundPct = toBarPct(s, 100);
 
   return (
