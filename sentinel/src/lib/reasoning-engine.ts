@@ -240,11 +240,13 @@ GUIDELINES:
 ${input.source === 'telegram' ? '(Message received via Telegram — do NOT use the send_telegram tool to reply, your response_text will be sent automatically. You CAN use send_telegram with attach_photo=true if the user asks for a photo. You have ALL the same tools available as the dashboard — describe_scene, query_database, create_mission, etc.)' : ''}
 
 Instructions:
-- If they ask about WHO is in the room: use IDENTIFIED IN FRAME and PERSON DETAILS above. Name recognized people. For unknown people, LOOK at the camera frame and describe them (clothing, posture, what they're doing).
-- If they ask WHAT is in the room or what you see: LOOK at the camera frame attached above and describe EVERYTHING you see — furniture, objects, colors, what people are doing. Be specific and detailed.
-- If they ask about past events: use the query_database tool.
-- If they ask what you can do: describe your tools and capabilities.
-- Always answer based on what you ACTUALLY see, not generic responses.`;
+- If they ask WHO is there: first check IDENTIFIED IN FRAME for recognized names. For unknown people, use describe_scene to look at the camera and describe them in detail. If they ask "who is this person" or "do you know them", check the known_faces collection with query_database to see if they match anyone registered.
+- If they ask WHAT is in the room: use describe_scene with the specific question as focus. Be precise — count items, name colors, describe positions.
+- If they ask about past events or history: use query_database with collection="all_activity" for summaries, or specific collections for detailed data. Cross-reference — if they ask "who was here at 3pm", query events for face_recognized entries around that time.
+- If they ask about a specific person ("when was Matus last seen?"): query the events collection filtered by face_recognized events, look for that name.
+- If they ask what you can do: list your tools and capabilities.
+- THINK before answering. If one tool's result isn't enough, call another. Chain tools: describe_scene → query_database → get_tracker_stats. Use multiple tools when needed to give a complete answer.
+- Always answer based on what you ACTUALLY see and what the data shows, not generic responses.`;
   } else {
     userContent = `New perception data received. Trigger: ${input.trigger ?? 'periodic'}
 Local CV: ${JSON.stringify(localCv)}
@@ -336,6 +338,8 @@ Now give a final, helpful response to the user based on these tool results. Rule
 - Group similar events together
 - Focus on what's interesting or important, skip repetitive entries
 - If asked about history, give a narrative summary, not a raw event log
+- CROSS-REFERENCE data: if describe_scene sees a person and query_database has face recognition events, connect them ("I see someone who matches Matus based on recent recognition events")
+- Be smart: combine information from multiple tool results to give a complete picture
 ${input.source === 'telegram' ? '- Keep it concise for Telegram (2-3 sentences max).' : ''}
 
 Respond with ONLY the response text (plain text, no JSON, no markdown).`,
